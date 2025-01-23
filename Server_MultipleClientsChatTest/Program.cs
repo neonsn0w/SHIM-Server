@@ -75,8 +75,6 @@ namespace Server_MultipleClientsChatTest
 
                     Console.WriteLine("Text received -> {0} ", data);
 
-                    BroadcastMessage(clientID, data);
-
                     byte[] message;
 
                     data = data.Remove(data.Length - 5);
@@ -114,6 +112,11 @@ namespace Server_MultipleClientsChatTest
                                 string messageToSend = splitData[2];
                                 message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
                                 clients[receiverId].Send(message);
+                            }
+                            else if (data.StartsWith("broadcast") && data.Contains(" "))
+                            {
+                                string[] splitData = data.Split(" ");
+                                BroadcastMessage(clientID, splitData[1]);
                             }
                             else
                             {
