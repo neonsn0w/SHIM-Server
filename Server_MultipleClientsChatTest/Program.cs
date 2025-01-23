@@ -107,29 +107,28 @@ namespace Server_MultipleClientsChatTest
                             break;
 
                         default:
-                            message = Encoding.UTF8.GetBytes("Invalid command");
-                            clientSocket.Send(message);
+                            if (data.StartsWith("msg"))
+                            {
+                                if (data.Contains(" "))
+                                {
+                                    string[] splitData = data.Split(" ");
+                                    int receiverId = int.Parse(splitData[1]);
+                                    string messageToSend = splitData[2];
+                                    message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
+                                    clients[receiverId].Send(message);
+                                }
+                                else
+                                {
+                                    message = Encoding.UTF8.GetBytes("Invalid command");
+                                    clientSocket.Send(message);
+                                }
+                            } else
+                            {
+                                message = Encoding.UTF8.GetBytes("Invalid command");
+                                clientSocket.Send(message);
+                            }
                             break;
                     }
-                    /*
-                    if (data.ToLower() == "ping")
-                    {
-                        message = Encoding.UTF8.GetBytes("Pong");
-                        clientSocket.Send(message);
-                    }
-                    else if (data.ToLower() == "exit")
-                    {
-                        message = Encoding.UTF8.GetBytes("Goodbye");
-                        clients.TryRemove(clientID, out _);
-                        clientSocket.Send(message);
-                        break;
-                    }
-                    else
-                    {
-                        message = Encoding.UTF8.GetBytes("Invalid command");
-                        clientSocket.Send(message);
-                    }*/
-
                 }
             }
             catch (Exception e)
