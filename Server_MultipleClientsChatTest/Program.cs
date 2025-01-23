@@ -107,22 +107,15 @@ namespace Server_MultipleClientsChatTest
                             break;
 
                         default:
-                            if (data.StartsWith("msg"))
+                            if (data.StartsWith("msg") && data.Contains(" "))
                             {
-                                if (data.Contains(" "))
-                                {
-                                    string[] splitData = data.Split(" ");
-                                    int receiverId = int.Parse(splitData[1]);
-                                    string messageToSend = splitData[2];
-                                    message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
-                                    clients[receiverId].Send(message);
-                                }
-                                else
-                                {
-                                    message = Encoding.UTF8.GetBytes("Invalid command");
-                                    clientSocket.Send(message);
-                                }
-                            } else
+                                string[] splitData = data.Split(" ");
+                                int receiverId = int.Parse(splitData[1]);
+                                string messageToSend = splitData[2];
+                                message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
+                                clients[receiverId].Send(message);
+                            }
+                            else
                             {
                                 message = Encoding.UTF8.GetBytes("Invalid command");
                                 clientSocket.Send(message);
