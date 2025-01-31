@@ -4,6 +4,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
+using Microsoft.Extensions.Logging;
+
 namespace Server_MultipleClientsChatTest
 {
     class Server
@@ -12,13 +14,21 @@ namespace Server_MultipleClientsChatTest
         private static ConcurrentDictionary<int, Socket> clients = new ConcurrentDictionary<int, Socket>();
         private static int clientIdCounter = 0;
 
-        static void Main(string[] args)
+        private static ILogger logger;
+
+        private static void Main(string[] args)
         {
+            // initializing the logger
+            using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
+            logger = factory.CreateLogger("SHIM-Server");
+            
             ExecuteServer();
         }
 
         private static void ExecuteServer()
         {
+            logger.LogInformation("Server starting...");
+
             IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
             IPAddress ipAddr = ipHost.AddressList[0];
             IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
@@ -35,14 +45,14 @@ namespace Server_MultipleClientsChatTest
                 while (true)
                 {
 
-                    Console.WriteLine("Waiting connection ... ");
+                    logger.LogInformation("Waiting connection ... ");
 
                     Socket clientSocket = listener.Accept(); // Suspends execution
 
                     int clientID = clientIdCounter++;   
                     clients.TryAdd(clientID, clientSocket);
 
-                    Console.WriteLine("Accepted connection from " + clientSocket.RemoteEndPoint);
+                    logger.LogInformation("Accepted connection from " + clientSocket.RemoteEndPoint);
 
                     Thread clientThread = new Thread(() => HandleClient(clientID, clientSocket));
                     clientThread.Start();
@@ -68,18 +78,18 @@ namespace Server_MultipleClientsChatTest
 
                     int numByte = clientSocket.Receive(bytes);
 
-                    Console.WriteLine(numByte);
+                    // Console.WriteLine(numByte);
 
                     data += Encoding.UTF8.GetString(bytes,
                                                 0, numByte);
 
-                    Console.WriteLine("Text received -> {0} ", data);
+                    logger.LogInformation("Text received -> {0} ", data);
 
                     byte[] message;
 
                     data = data.Remove(data.Length - 5);
 
-                    Console.WriteLine("Message: {0}", data);
+                    logger.LogInformation("Message: {0}", data);
 
                     switch (data.ToLower())
                     {
@@ -129,8 +139,8 @@ namespace Server_MultipleClientsChatTest
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
-                Console.WriteLine("REMOVING THE SOCKET FROM THE INTERNAL DICTIONARY IMMEDIATELY!");
+                logger.LogError(e.ToString());
+                logger.LogWarning("REMOVING THE SOCKET FROM THE INTERNAL DICTIONARY IMMEDIATELY!");
                 clients.TryRemove(clientID, out _);
             }
             finally
