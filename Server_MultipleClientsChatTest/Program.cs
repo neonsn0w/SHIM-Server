@@ -101,7 +101,7 @@ namespace Server_MultipleClientsChatTest
                         case "exit":
                             message = Encoding.UTF8.GetBytes("Goodbye");
                             clients.TryRemove(clientID, out _);
-                            clientSocket.Send(message);
+                            // clientSocket.Send(message);
                             break;
 
                         case "list":
