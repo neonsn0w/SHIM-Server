@@ -11,7 +11,7 @@ namespace Server_MultipleClientsChatTest
     class Server
     {
         // the ConcurrentDictionary class is thread-safe
-        private static ConcurrentDictionary<int, Socket> clients = new ConcurrentDictionary<int, Socket>();
+        private static ConcurrentDictionary<int, UserClient> clients = new ConcurrentDictionary<int, UserClient>();
         private static int clientIdCounter = 0;
 
         private static ILogger logger;
@@ -50,7 +50,7 @@ namespace Server_MultipleClientsChatTest
                     Socket clientSocket = listener.Accept(); // Suspends execution
 
                     int clientID = clientIdCounter++;   
-                    clients.TryAdd(clientID, clientSocket);
+                    clients.TryAdd(clientID, new UserClient(clientSocket));
 
                     logger.LogInformation("Accepted connection from " + clientSocket.RemoteEndPoint);
 
@@ -109,7 +109,7 @@ namespace Server_MultipleClientsChatTest
                             clientSocket.Send(message);
                             foreach (var client in clients)
                             {
-                                message = Encoding.UTF8.GetBytes("Client " + client.Key + ": " + client.Value.RemoteEndPoint + "\n");
+                                message = Encoding.UTF8.GetBytes("Client " + client.Key + ": " + client.Value.Socket.RemoteEndPoint + "\n");
                                 clientSocket.Send(message);
                             }
                             break;
@@ -121,9 +121,14 @@ namespace Server_MultipleClientsChatTest
                                 int receiverId = int.Parse(splitData[1]);
                                 string messageToSend = splitData[2];
                                 message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
-                                clients[receiverId].Send(message);
+                                clients[receiverId].Socket.Send(message);
                             }
                             else if (data.StartsWith("broadcast") && data.Contains(" "))
+                            {
+                                string[] splitData = data.Split(" ");
+                                BroadcastMessage(clientID, splitData[1]);
+                            }
+                            else if (data.StartsWith("register") && data.Contains(" "))
                             {
                                 string[] splitData = data.Split(" ");
                                 BroadcastMessage(clientID, splitData[1]);
@@ -158,7 +163,7 @@ namespace Server_MultipleClientsChatTest
             {
                 if (client.Key != senderId)
                 {
-                    client.Value.Send(buffer); // .Value is used because it's in a Dictionary!!!
+                    client.Value.Socket.Send(buffer); // .Value is used because it's in a Dictionary!!!
                 }
             }
         }
