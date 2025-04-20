@@ -54,7 +54,7 @@ namespace Server_MultipleClientsChatTest
 
                     logger.LogInformation("Accepted connection from " + clientSocket.RemoteEndPoint);
 
-                    Thread clientThread = new Thread(() => HandleClient(clientID, clientSocket));
+                    Thread clientThread = new Thread(() => HandleClient(clientID, new UserClient(clientSocket)));
                     clientThread.Start();
 
                 }
@@ -66,7 +66,7 @@ namespace Server_MultipleClientsChatTest
             }
         }
 
-        private static void HandleClient(int clientID, Socket clientSocket)
+        private static void HandleClient(int clientID, UserClient userClient)
         {
             try
             {
@@ -76,7 +76,7 @@ namespace Server_MultipleClientsChatTest
                     byte[] bytes = new Byte[1024];
                     string data = null;
 
-                    int numByte = clientSocket.Receive(bytes);
+                    int numByte = userClient.Socket.Receive(bytes);
 
                     // Console.WriteLine(numByte);
 
@@ -87,7 +87,7 @@ namespace Server_MultipleClientsChatTest
 
                     byte[] message;
 
-                    data = data.Remove(data.Length - 5);
+                    data = data.Remove(data.Length);
 
                     logger.LogInformation("Message: {0}", data);
 
@@ -95,7 +95,7 @@ namespace Server_MultipleClientsChatTest
                     {
                         case "ping":
                             message = Encoding.UTF8.GetBytes("Pong");
-                            clientSocket.Send(message);
+                            userClient.Socket.Send(message);
                             break;
 
                         case "exit":
@@ -106,11 +106,12 @@ namespace Server_MultipleClientsChatTest
 
                         case "list":
                             message = Encoding.UTF8.GetBytes("List of clients: ");
-                            clientSocket.Send(message);
+                            userClient.Socket.Send(message);
                             foreach (var client in clients)
                             {
-                                message = Encoding.UTF8.GetBytes("Client " + client.Key + ": " + client.Value.Socket.RemoteEndPoint + "\n");
-                                clientSocket.Send(message);
+                                message = Encoding.UTF8.GetBytes("Client " + client.Key + ": " + client.Value.Socket.RemoteEndPoint
+                                    + "\n" + "pubkey: " + client.Value.PublicKey + "\n" + "nickname: " + client.Value.Nickname);
+                                userClient.Socket.Send(message);
                             }
                             break;
 
@@ -133,10 +134,24 @@ namespace Server_MultipleClientsChatTest
                                 string[] splitData = data.Split(" ");
                                 BroadcastMessage(clientID, splitData[1]);
                             }
+                            else if (data.StartsWith("setpubkey") && data.Contains(" "))
+                            {
+                                string[] splitData = data.Split(" ");
+                                userClient.PublicKey = splitData[1];
+                                message = Encoding.UTF8.GetBytes("OK");
+                                userClient.Socket.Send(message);
+                            }
+                            else if (data.StartsWith("setnick") && data.Contains(" "))
+                            {
+                                string[] splitData = data.Split(" ");
+                                userClient.Nickname = splitData[1];
+                                message = Encoding.UTF8.GetBytes("OK");
+                                userClient.Socket.Send(message);
+                            }
                             else
                             {
                                 message = Encoding.UTF8.GetBytes("Invalid command");
-                                clientSocket.Send(message);
+                                userClient.Socket.Send(message);
                             }
                             break;
                     }
@@ -150,8 +165,8 @@ namespace Server_MultipleClientsChatTest
             }
             finally
             {
-                clientSocket.Shutdown(SocketShutdown.Both);
-                clientSocket.Close();
+                userClient.Socket.Shutdown(SocketShutdown.Both);
+                userClient.Socket.Close();
             }
         }
 
