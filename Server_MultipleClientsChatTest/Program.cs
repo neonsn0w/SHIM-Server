@@ -138,6 +138,7 @@ namespace Server_MultipleClientsChatTest
                             {
                                 string[] splitData = data.Split(" ");
                                 userClient.PublicKey = splitData[1];
+                                clients[clientID] = userClient;
                                 message = Encoding.UTF8.GetBytes("OK");
                                 userClient.Socket.Send(message);
                             }
@@ -145,6 +146,7 @@ namespace Server_MultipleClientsChatTest
                             {
                                 string[] splitData = data.Split(" ");
                                 userClient.Nickname = splitData[1];
+                                clients[clientID] = userClient;
                                 message = Encoding.UTF8.GetBytes("OK");
                                 userClient.Socket.Send(message);
                             }
