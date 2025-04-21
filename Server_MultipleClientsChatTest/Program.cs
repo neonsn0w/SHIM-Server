@@ -143,7 +143,7 @@ namespace Server_MultipleClientsChatTest
                             break;
 
                         default:
-                            if (data.StartsWith("msg") && data.Contains(" "))
+                            if (data.StartsWith("msg ") && data.Contains(" "))
                             {
                                 string[] splitData = data.Split(" ");
                                 int receiverId = int.Parse(splitData[1]);
@@ -151,12 +151,11 @@ namespace Server_MultipleClientsChatTest
                                 message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
                                 clients[receiverId].Socket.Send(message);
                             }
-                            else if (data.StartsWith("broadcast") && data.Contains(" "))
+                            else if (data.StartsWith("broadcast ") && data.Contains(" "))
                             {
-                                string[] splitData = data.Split(" ");
-                                BroadcastMessage(clientID, splitData[1]);
+                                BroadcastMessage(clientID, data.Substring(10));
                             }
-                            else if (data.StartsWith("setpubkey") && data.Contains(" "))
+                            else if (data.StartsWith("setpubkey ") && data.Contains(" "))
                             {
                                 string[] splitData = data.Split(" ");
                                 userClient.PublicKey = splitData[1];
@@ -164,10 +163,9 @@ namespace Server_MultipleClientsChatTest
                                 message = Encoding.UTF8.GetBytes("OK");
                                 userClient.Socket.Send(message);
                             }
-                            else if (data.StartsWith("setnick") && data.Contains(" "))
+                            else if (data.StartsWith("setnick ") && data.Contains(" "))
                             {
-                                string[] splitData = data.Split(" ");
-                                userClient.Nickname = splitData[1];
+                                userClient.Nickname = data.Substring(8);
                                 clients[clientID] = userClient;
                                 message = Encoding.UTF8.GetBytes("OK");
                                 userClient.Socket.Send(message);
