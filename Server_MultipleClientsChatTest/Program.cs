@@ -14,15 +14,33 @@ namespace Server_MultipleClientsChatTest
         private static ConcurrentDictionary<int, UserClient> clients = new ConcurrentDictionary<int, UserClient>();
         private static int clientIdCounter = 0;
 
-        private static ILogger logger;
+        public static ILogger logger;
 
         private static void Main(string[] args)
         {
             // initializing the logger
             using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
             logger = factory.CreateLogger("SHIM-Server");
+
+            setConfiguration();
             
-            ExecuteServer();
+            if (DatabaseTools.Connect())
+            {
+                logger.LogInformation("Connected to the database!");
+                ExecuteServer();
+            }
+            else
+            {
+                logger.LogError("Failed to connect to the database!");
+            }
+        }
+
+        public static void setConfiguration()
+        {
+            DatabaseConfiguration.Address = "127.0.0.1";
+            DatabaseConfiguration.DBName = "shim";
+            DatabaseConfiguration.DBUsername = "root";
+            DatabaseConfiguration.DBPassword = "pietpras";
         }
 
         private static void ExecuteServer()
@@ -115,6 +133,12 @@ namespace Server_MultipleClientsChatTest
                             }
                             break;
 
+                        case "updatedb":
+                            DatabaseTools.RunQuery($"INSERT INTO shim.users(public_key, username) VALUES ('{userClient.PublicKey}', '{userClient.Nickname}')");
+                            message = Encoding.UTF8.GetBytes("OK");
+                            userClient.Socket.Send(message);
+                            break;
+
                         default:
                             if (data.StartsWith("msg") && data.Contains(" "))
                             {
@@ -125,11 +149,6 @@ namespace Server_MultipleClientsChatTest
                                 clients[receiverId].Socket.Send(message);
                             }
                             else if (data.StartsWith("broadcast") && data.Contains(" "))
-                            {
-                                string[] splitData = data.Split(" ");
-                                BroadcastMessage(clientID, splitData[1]);
-                            }
-                            else if (data.StartsWith("register") && data.Contains(" "))
                             {
                                 string[] splitData = data.Split(" ");
                                 BroadcastMessage(clientID, splitData[1]);
