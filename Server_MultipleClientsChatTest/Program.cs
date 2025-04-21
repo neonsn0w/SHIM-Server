@@ -134,7 +134,10 @@ namespace Server_MultipleClientsChatTest
                             break;
 
                         case "updatedb":
-                            DatabaseTools.RunQuery($"INSERT INTO shim.users(public_key, username) VALUES ('{userClient.PublicKey}', '{userClient.Nickname}')");
+                            if (!DatabaseTools.RunQuery($"INSERT INTO shim.users(public_key, username) VALUES ('{userClient.PublicKey}', '{userClient.Nickname}')"))
+                            {
+                                DatabaseTools.RunQuery($"UPDATE shim.users SET username = '{userClient.Nickname}' WHERE public_key = '{userClient.PublicKey}'");
+                            }
                             message = Encoding.UTF8.GetBytes("OK");
                             userClient.Socket.Send(message);
                             break;
