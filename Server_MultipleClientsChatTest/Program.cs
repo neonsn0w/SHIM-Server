@@ -91,7 +91,7 @@ namespace Server_MultipleClientsChatTest
                 while (true)
                 {
                     // Data buffer
-                    byte[] bytes = new Byte[1024];
+                    byte[] bytes = new Byte[65536];
                     string data = null;
 
                     int numByte = userClient.Socket.Receive(bytes);
@@ -152,7 +152,6 @@ namespace Server_MultipleClientsChatTest
                             }
                             message = Encoding.UTF8.GetBytes(userListBuilder.ToString());
                             userClient.Socket.Send(message);
-                            Console.WriteLine("SENT!");
                             break;
 
                         default:
