@@ -142,6 +142,19 @@ namespace Server_MultipleClientsChatTest
                             userClient.Socket.Send(message);
                             break;
 
+                        case "getusers":
+                            StringBuilder userListBuilder = new StringBuilder();
+                            userListBuilder.Append("§§§USERLIST§§§");
+                            foreach (var client in clients)
+                            {
+                                // Format: Nickname§PublicKey
+                                userListBuilder.AppendLine($"{client.Value.Nickname}§{client.Value.PublicKey}");
+                            }
+                            message = Encoding.UTF8.GetBytes(userListBuilder.ToString());
+                            userClient.Socket.Send(message);
+                            Console.WriteLine("SENT!");
+                            break;
+
                         default:
                             if (data.StartsWith("msg ") && data.Contains(" "))
                             {
