@@ -43,6 +43,20 @@ namespace Server_MultipleClientsChatTest
             DatabaseConfiguration.DBPassword = "pietpras";
         }
 
+        private static int searchUserByPublicKey(string publickey)
+        {
+            foreach (var client in clients)
+            {
+                if (client.Value.PublicKey == publickey.Trim())
+                {
+                    logger.LogInformation($"User found: Nickname: {client.Value.Nickname}, PublicKey: {client.Value.PublicKey}, RemoteEndPoint: {client.Value.Socket.RemoteEndPoint}");
+                    return client.Key;
+                }
+            }
+            logger.LogWarning("User with the specified public key not found.");
+            return -1;
+        }
+
         private static void ExecuteServer()
         {
             logger.LogInformation("Server starting...");
@@ -103,7 +117,7 @@ namespace Server_MultipleClientsChatTest
 
                     logger.LogInformation("Text received -> {0} ", data);
 
-                    byte[] message;
+                    byte[] message = new Byte[65536];
 
                     data = data.Remove(data.Length);
 
@@ -182,6 +196,25 @@ namespace Server_MultipleClientsChatTest
                                 message = Encoding.UTF8.GetBytes("OK");
                                 userClient.Socket.Send(message);
                             }
+                            else if (data.StartsWith("dm ") && data.Contains("§"))
+                            {
+                                data = data.Substring(3);
+                                Console.WriteLine(data);
+                                string[] splitData = data.Split("§");
+                                Console.WriteLine(splitData[0]);
+                                Console.WriteLine(splitData[1]);
+                                int receiverId = searchUserByPublicKey(splitData[0]);
+                                if (receiverId != -1)
+                                {
+                                    message = Encoding.UTF8.GetBytes($"md {clients[clientID].PublicKey}§{splitData[1]}§{clients[clientID].Nickname}");
+                                    clients[receiverId].Socket.Send(message);
+                                }
+                                else
+                                {
+                                    message = Encoding.UTF8.GetBytes("errusrnotfound");
+                                    userClient.Socket.Send(message);
+                                }
+                            }
                             else
                             {
                                 message = Encoding.UTF8.GetBytes("Invalid command");
@@ -193,7 +226,7 @@ namespace Server_MultipleClientsChatTest
             }
             catch (Exception e)
             {
-                logger.LogError(e.ToString());
+                logger.LogWarning(e.ToString());
                 logger.LogWarning("REMOVING THE SOCKET FROM THE INTERNAL DICTIONARY IMMEDIATELY!");
                 clients.TryRemove(clientID, out _);
             }

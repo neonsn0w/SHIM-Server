@@ -54,7 +54,7 @@ namespace Server_MultipleClientsChatTest
             }
             catch (Exception ex)
             {
-                Server.logger.LogError("Error: " + ex.Message);
+                Server.logger.LogWarning("Error: " + ex.Message);
 
                 return false;
             }
