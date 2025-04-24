@@ -179,7 +179,7 @@ namespace Server_MultipleClientsChatTest
                             }
                             else if (data.StartsWith("broadcast ") && data.Contains(" "))
                             {
-                                BroadcastMessage(clientID, data.Substring(10));
+                                BroadcastMessage(clientID, $"brd {data.Substring(10)}§{clients[clientID].Nickname}");
                             }
                             else if (data.StartsWith("setpubkey ") && data.Contains(" "))
                             {
@@ -199,10 +199,7 @@ namespace Server_MultipleClientsChatTest
                             else if (data.StartsWith("dm ") && data.Contains("§"))
                             {
                                 data = data.Substring(3);
-                                Console.WriteLine(data);
                                 string[] splitData = data.Split("§");
-                                Console.WriteLine(splitData[0]);
-                                Console.WriteLine(splitData[1]);
                                 int receiverId = searchUserByPublicKey(splitData[0]);
                                 if (receiverId != -1)
                                 {
@@ -239,7 +236,7 @@ namespace Server_MultipleClientsChatTest
 
         private static void BroadcastMessage(int senderId, string message)
         {
-            byte[] buffer = Encoding.ASCII.GetBytes("Client " + senderId + ": " + message);
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
 
             foreach (var client in clients)
             {
