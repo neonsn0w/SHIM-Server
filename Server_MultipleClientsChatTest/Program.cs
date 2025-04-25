@@ -42,7 +42,7 @@ namespace Server_MultipleClientsChatTest
             DatabaseConfiguration.Address = "127.0.0.1";
             DatabaseConfiguration.DBName = "shim";
             DatabaseConfiguration.DBUsername = "root";
-            DatabaseConfiguration.DBPassword = "pietpras";
+            DatabaseConfiguration.DBPassword = ""; // i promise there wasn't my password here
         }
 
         private static int searchUserByPublicKey(string publickey)
@@ -63,9 +63,29 @@ namespace Server_MultipleClientsChatTest
         {
             logger.LogInformation("Server starting...");
 
-            IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
-            IPAddress ipAddr = ipHost.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddr, 11111);
+            IPAddress ipAddr;
+
+            if (File.Exists("runlocally.txt"))
+            {
+                IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());
+                ipAddr = ipHost.AddressList[0];
+            }
+            else
+            {
+                ipAddr = IPAddress.Parse("0.0.0.0");
+            }
+
+            int port = 11111; // Default port  
+            if (File.Exists("port.txt"))
+            {
+                string portText = File.ReadAllText("port.txt").Trim();
+                if (int.TryParse(portText, out int parsedPort) && parsedPort > 0 && parsedPort <= 65535)
+                {
+                    port = parsedPort;
+                }
+            }
+
+            IPEndPoint localEndPoint = new IPEndPoint(ipAddr, port);
 
             Socket listener = new Socket(ipAddr.AddressFamily,
                         SocketType.Stream, ProtocolType.Tcp);
