@@ -22,9 +22,11 @@ namespace Server_MultipleClientsChatTest
             using ILoggerFactory factory = LoggerFactory.Create(builder => builder.AddConsole());
             logger = factory.CreateLogger("SHIM-Server");
 
-            setConfiguration();
-            
-            if (DatabaseTools.Connect())
+            ExecuteServer();
+
+            // setConfiguration();
+
+            /*if (DatabaseTools.Connect())
             {
                 logger.LogInformation("Connected to the database!");
                 ExecuteServer();
@@ -32,7 +34,7 @@ namespace Server_MultipleClientsChatTest
             else
             {
                 logger.LogError("Failed to connect to the database!");
-            }
+            }*/
         }
 
         public static void setConfiguration()
@@ -110,8 +112,6 @@ namespace Server_MultipleClientsChatTest
 
                     int numByte = userClient.Socket.Receive(bytes);
 
-                    // Console.WriteLine(numByte);
-
                     data += Encoding.UTF8.GetString(bytes,
                                                 0, numByte);
 
@@ -147,14 +147,14 @@ namespace Server_MultipleClientsChatTest
                             }
                             break;
 
-                        case "updatedb":
+                        /*case "updatedb":
                             if (!DatabaseTools.RunQuery($"INSERT INTO shim.users(public_key, username) VALUES ('{userClient.PublicKey}', '{userClient.Nickname}')"))
                             {
                                 DatabaseTools.RunQuery($"UPDATE shim.users SET username = '{userClient.Nickname}' WHERE public_key = '{userClient.PublicKey}'");
                             }
                             message = Encoding.UTF8.GetBytes("OK");
                             userClient.Socket.Send(message);
-                            break;
+                            break;*/
 
                         case "getusers":
                             StringBuilder userListBuilder = new StringBuilder();
@@ -169,17 +169,10 @@ namespace Server_MultipleClientsChatTest
                             break;
 
                         default:
-                            if (data.StartsWith("msg ") && data.Contains(" "))
+                            if (data.StartsWith("broadcast ") && data.Contains(" "))
                             {
-                                string[] splitData = data.Split(" ");
-                                int receiverId = int.Parse(splitData[1]);
-                                string messageToSend = splitData[2];
-                                message = Encoding.UTF8.GetBytes("Client " + clientID + " says: " + messageToSend);
-                                clients[receiverId].Socket.Send(message);
-                            }
-                            else if (data.StartsWith("broadcast ") && data.Contains(" "))
-                            {
-                                BroadcastMessage(clientID, $"brd {data.Substring(10)}§{clients[clientID].Nickname}");
+                                string[] splitData = data.Substring(10).Split("§");
+                                BroadcastMessage(clientID, $"brd {splitData[0]}§{clients[clientID].Nickname}§{splitData[1]}");
                             }
                             else if (data.StartsWith("setpubkey ") && data.Contains(" "))
                             {
@@ -203,7 +196,7 @@ namespace Server_MultipleClientsChatTest
                                 int receiverId = searchUserByPublicKey(splitData[0]);
                                 if (receiverId != -1)
                                 {
-                                    message = Encoding.UTF8.GetBytes($"md {clients[clientID].PublicKey}§{splitData[1]}§{clients[clientID].Nickname}");
+                                    message = Encoding.UTF8.GetBytes($"md {clients[clientID].PublicKey}§{splitData[1]}§{clients[clientID].Nickname}§{splitData[2]}");
                                     clients[receiverId].Socket.Send(message);
                                 }
                                 else
